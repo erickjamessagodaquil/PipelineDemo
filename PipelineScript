@@ -1,26 +1,100 @@
 pipeline {
-    agent any
+    agent any // Or specify a specific agent/label
+
     stages {
-        stage('Clone Repository') {
+        stage('Checkout') {
             steps {
-                git 'https://github.com/your-repo.git'
+                git credentialsId: 'your-git-credentials-id', url: 'your-git-repository-url', branch: 'your-branch'
             }
         }
+
         stage('Build') {
             steps {
-                sh 'mvn clean package // Replace with \'npm install\' or \'python setup.py\' if needed'
+                // Example: Maven build
+                sh 'mvn clean install'
+
+                // Example: Node.js build
+                // sh 'npm install'
+                // sh 'npm run build'
+
+                // Example: Docker build
+                // sh 'docker build -t your-image-name:latest .'
             }
         }
+
         stage('Test') {
             steps {
-                sh 'mvn test // Replace with appropriate test command'
+                // Example: JUnit tests (Maven)
+                sh 'mvn test'
+
+                // Example: Jest tests (Node.js)
+                // sh 'npm test'
+
+                // Example: Docker container testing
+                // sh 'docker run --rm your-image-name:latest your-test-command'
+            }
+            post {
+                always {
+                     junit '**/target/surefire-reports/*.xml' // for Maven
+                     // junit '**/test-results.xml' //For other testing frameworks that produce junit compatible reports
+                }
             }
         }
+
+        stage('Package') {
+            steps {
+                // Example: Create a JAR file (Maven)
+                sh 'mvn package'
+
+                // Example: Create a Docker image
+                // sh 'docker build -t your-dockerhub-username/your-image-name:latest .'
+            }
+        }
+
+        stage('Publish') {
+            steps {
+                // Example: Publish to Artifactory (Maven)
+                // sh 'mvn deploy'
+
+                // Example: Push Docker image to Docker Hub
+                // sh 'docker login -u "$DOCKER_HUB_USERNAME" -p "$DOCKER_HUB_PASSWORD"'
+                // sh 'docker push your-dockerhub-username/your-image-name:latest'
+
+                //Example: Copy artifacts to a shared location
+                //archiveArtifacts artifacts: 'target/*.jar', allowEmptyArchive: true
+            }
+        }
+
         stage('Deploy') {
             steps {
-                echo 'Deploying application...'
-                // Add deployment scripts here
+                // Example: Deploy to a staging environment
+                // sh 'ssh user@staging-server "deploy-script.sh"'
+
+                // Example: Deploy to Kubernetes
+                // sh 'kubectl apply -f deployment.yaml'
+
+                // Example: Deploy to AWS Elastic Beanstalk
+                // sh 'eb deploy'
             }
+        }
+    }
+    post {
+        always {
+            // Clean up resources if necessary
+            // Example: Delete temporary files
+            // sh 'rm -rf temp'
+        }
+        success {
+            echo 'Pipeline completed successfully'
+        }
+        failure {
+            echo 'Pipeline failed'
+        }
+        unstable {
+            echo 'Pipeline completed with unstable results'
+        }
+        changed {
+            echo 'Pipeline changed'
         }
     }
 }
